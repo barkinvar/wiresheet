@@ -3,3 +3,4 @@ __pycache__/
 examples/out/
 tools/mergepdf
 .DS_Store
+tools/pdflinks

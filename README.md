@@ -57,7 +57,7 @@ Sheet(fname, title, sheet="1 of 6", columns=[[...], [...]], project="", rev="A",
 Boxes:
 
 ```python
-s.dev(name, type_="", img=None, ports=(), note="", imgh=80, offrobot=False)
+s.dev(name, type_="", img=None, ports=(), note="", imgh=80, offrobot=False, link=None)
 ```
 
 - `name` is the title and the handle used by wires.
@@ -66,6 +66,8 @@ s.dev(name, type_="", img=None, ports=(), note="", imgh=80, offrobot=False)
 - `ports` are the labels printed on the device, top to bottom. Use the real printing, `DC PWR  VP+`, `PoE+  RJ45`, `stud 3`, not invented names.
 - `note` is one short line under the ports. Keep it to facts.
 - `offrobot=True` draws the box dashed, for chargers, docks and other external equipment.
+- `link` is a URL, usually the product page. The whole box becomes clickable in the SVG, and the PDF gets
+  a link annotation at the same spot, so a reader can click a part and land on its datasheet or shop page.
 
 Wires:
 
@@ -108,8 +110,12 @@ What tends to read well, learnt the hard way:
 ## Output
 
 Per sheet: `name.svg` (editable in Inkscape, Illustrator, Figma), `name.png` at 2x, `name.pdf` as a
-vector page in the chosen format. `merge_pdfs(out, [pdfs])` joins them with pypdf;
-`tools/mergepdf.swift` is the dependency-free macOS equivalent.
+vector page in the chosen format. `merge_pdfs(out, [pdfs])` joins them.
+
+Links in PDFs: librsvg does not carry SVG links into the PDF, so after rendering the engine adds link
+annotations itself. It uses pypdf if installed (`pip install pypdf`), otherwise on macOS it builds and
+runs `tools/pdflinks.swift` (PDFKit, no dependencies). `merge_pdfs` works the same way with
+`tools/mergepdf.swift`, and keeps the annotations.
 
 ## Project layout
 
@@ -117,6 +123,7 @@ vector page in the chosen format. `merge_pdfs(out, [pdfs])` joins them with pypd
 wiresheet.py          the whole engine, one file
 examples/demo.py      two-sheet example
 examples/img/         photos for the example (empty; add your own)
-tools/mergepdf.swift  PDF merge via PDFKit
+tools/mergepdf.swift  PDF merge via PDFKit (macOS fallback when pypdf is absent)
+tools/pdflinks.swift  PDF link annotations via PDFKit (same)
 docs/example.png      the image at the top of this file
 ```

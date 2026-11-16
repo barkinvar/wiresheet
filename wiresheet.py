@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # ---------------------------------------------------------------- wire colours
 RED, BLK, BLU, YEL, GRN, ORG = "#c00000", "#111111", "#1f5fbf", "#d9a800", "#1e9e3e", "#e07000"
@@ -82,10 +82,11 @@ class Sheet:
 
     # ---------------------------------------------------------------- data entry
     def dev(self, name: str, type_: str = "", img: str | None = None, ports=(), note: str = "", imgh: int = 80,
-            offrobot: bool = False):
+            offrobot: bool = False, link: str | None = None):
         """Add a box. `ports` are the labels printed on the device, top to bottom. `img` is a file in img_dir.
-        `offrobot=True` draws the box dashed (external equipment)."""
-        self.devs[name] = dict(type=type_, img=img, ports=list(ports), note=note, imgh=imgh, off=offrobot)
+        `offrobot=True` draws the box dashed (external equipment). `link` is a URL: the whole box becomes
+        clickable in the SVG, and the PDF gets a link annotation (see add_pdf_links)."""
+        self.devs[name] = dict(type=type_, img=img, ports=list(ports), note=note, imgh=imgh, off=offrobot, link=link)
 
     def wire(self, a, b, color: str = BLK, label: str = "", width: float = 2.5, dashed: bool = False):
         """One conductor from (box, port) to (box, port)."""
@@ -167,7 +168,11 @@ class Sheet:
             cy += st.port_h
         if d["note"]:
             o.append(f'<text x="{x + W/2}" y="{cy + 13}" text-anchor="middle" font-size="{st.f_note}" fill="#555">{_esc(d["note"])}</text>')
-        return "\n".join(o)
+        out = "\n".join(o)
+        if d.get("link"):
+            self.link_rects.append((d["link"], x, y, W, h))
+            out = f'<a href="{_esc(d["link"])}" target="_blank">\n{out}\n</a>'
+        return out
 
     def wires_svg(self) -> str:
         st, W = self.st, self.W
@@ -243,6 +248,7 @@ class Sheet:
     def svg(self) -> str:
         """The finished page as an SVG string."""
         self.layout()
+        self.link_rects = []
         body = [self.wires_svg()] + [self.node_svg(n) for n in self.devs]
         pw_mm, ph_mm = PAGES[self.page]
         PW, PH = round(pw_mm * PX_PER_MM), round(ph_mm * PX_PER_MM)
@@ -252,6 +258,10 @@ class Sheet:
         sc = min(aw / self.width, ah / self.height, self.st.max_scale)
         ox = ax + (aw - self.width * sc) / 2
         oy = ay + (ah - self.height * sc) / 2
+        k = (pw_mm * 72 / 25.4) / PW                      # page px -> PDF points
+        self.pdf_links = [dict(url=u, x1=(ox + lx * sc) * k, x2=(ox + (lx + lw) * sc) * k,
+                               y1=(PH - (oy + (ly + lh) * sc)) * k, y2=(PH - (oy + ly * sc)) * k)
+                          for (u, lx, ly, lw, lh) in self.link_rects]
         tbx, tby = fx + fw - tb_w, fy + fh - tb_h
         cells = [(0, tb_w - 360, "", self.title, 19, True), (tb_w - 360, 120, "sheet", self.sheet, 15, False),
                  (tb_w - 240, 80, "rev", self.rev, 15, False), (tb_w - 160, 160, "date", self.date, 15, False)]
@@ -291,18 +301,66 @@ class Sheet:
             if "pdf" in wanted:
                 subprocess.run(["rsvg-convert", "-f", "pdf", "-o", base + ".pdf", svg_path], check=True)
                 written.append(base + ".pdf")
+                if self.pdf_links:
+                    add_pdf_links(base + ".pdf", self.pdf_links)
         print(f"{self.fname}: drawing {self.width:.0f}x{self.height:.0f} px on {self.page}, {', '.join(os.path.basename(p) for p in written)}")
         return written
 
 
+def _tool(name: str):
+    """A helper binary: on PATH, or built from tools/<name>.swift next to this file (macOS, PDFKit)."""
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", name)
+    for cand in (shutil.which(name), here):
+        if cand and os.access(cand, os.X_OK):
+            return cand
+    src = here + ".swift"
+    if os.path.exists(src) and shutil.which("swiftc"):
+        subprocess.run(["swiftc", "-O", "-o", here, src], check=True, capture_output=True)
+        return here
+    return None
+
+
+def add_pdf_links(pdf: str, links) -> int:
+    """Add URL link annotations to a single-page PDF. `links` are dicts with url, x1, y1, x2, y2 in PDF points,
+    origin bottom-left. Uses pypdf if installed, else the PDFKit helper tools/pdflinks (macOS)."""
+    links = list(links)
+    if not links:
+        return 0
+    try:
+        from pypdf import PdfReader, PdfWriter
+        from pypdf.annotations import Link
+        wr = PdfWriter(); wr.append(PdfReader(pdf))
+        for l in links:
+            wr.add_annotation(page_number=0, annotation=Link(rect=(l["x1"], l["y1"], l["x2"], l["y2"]), url=l["url"]))
+        with open(pdf, "wb") as f: wr.write(f)
+        return len(links)
+    except ImportError:
+        pass
+    tool = _tool("pdflinks")
+    if not tool:
+        print(f"{pdf}: links skipped (pip install pypdf, or build tools/pdflinks.swift on macOS)")
+        return 0
+    import json, tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as t:
+        json.dump(links, t); tmp = t.name
+    subprocess.run([tool, pdf, tmp], check=True, capture_output=True)
+    os.remove(tmp)
+    return len(links)
+
+
 def merge_pdfs(out: str, pdfs) -> str:
-    """Join single-sheet PDFs into one file. Uses pypdf if installed; otherwise raises with instructions."""
+    """Join single-sheet PDFs into one file, keeping link annotations. Uses pypdf if installed, else the
+    PDFKit helper tools/mergepdf (macOS); otherwise raises with instructions."""
+    pdfs = list(pdfs)
     try:
         from pypdf import PdfWriter
-    except ImportError as e:
-        raise RuntimeError("pip install pypdf, or use tools/mergepdf.swift on macOS") from e
-    wr = PdfWriter()
-    for p in pdfs: wr.append(p)
-    with open(out, "wb") as f: wr.write(f)
+        wr = PdfWriter()
+        for p in pdfs: wr.append(p)
+        with open(out, "wb") as f: wr.write(f)
+    except ImportError:
+        tool = _tool("mergepdf")
+        if not tool:
+            raise RuntimeError("pip install pypdf, or build tools/mergepdf.swift on macOS")
+        subprocess.run([tool, out, *pdfs], check=True, capture_output=True)
     print(f"{out}: {len(pdfs)} pages")
     return out

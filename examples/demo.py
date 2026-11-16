@@ -12,7 +12,7 @@ common = dict(project="Demo machine", rev="A", out_dir=OUT, img_dir=os.path.join
 s = Sheet("01-power", "24 V distribution", "1 of 2",
           columns=[["Battery A", "Battery B"], ["Main breaker"], ["+24V bus bar", "0V bus bar"],
                    ["Motor controller", "Computer", "24-12 V converter", "Lidar"]], **common)
-s.dev("Battery A", "24 V 50 Ah LiFePO4", None, ["+", "-"])
+s.dev("Battery A", "24 V 50 Ah LiFePO4", None, ["+", "-"], link="https://example.com/battery")
 s.dev("Battery B", "24 V 50 Ah LiFePO4", None, ["+", "-"], "parallel with A")
 s.dev("Main breaker", "100 A panel mount", None, ["stud, battery side", "stud, load side"], "main disconnect")
 s.dev("+24V bus bar", "4 studs, 150 A", None, ["stud 1", "stud 2", "stud 3", "stud 4"])
