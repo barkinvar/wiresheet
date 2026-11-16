@@ -25,7 +25,7 @@ Minimal use:
     s.pair("Fuse box", ["OUT 2 +", "OUT 2 -"], "Lamp", ["+", "-"], "2 A")
     s.render()            # writes 01-power.svg, .png, .pdf
 
-Requires rsvg-convert (librsvg) on PATH for PNG and PDF output, and pypdf for PDF links and merging; SVG needs nothing.
+Requires rsvg-convert (librsvg) on PATH for PNG and PDF output, and pypdf to merge sheets; SVG needs nothing.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 # ---------------------------------------------------------------- wire colours
 RED, BLK, BLU, YEL, GRN, ORG = "#c00000", "#111111", "#1f5fbf", "#d9a800", "#1e9e3e", "#e07000"
@@ -313,16 +313,18 @@ class Sheet:
 
 
 def add_pdf_links(pdf: str, links) -> int:
-    """Add URL link annotations to a single-page PDF in place. `links` are dicts with url, x1, y1, x2, y2
-    in PDF points, origin bottom-left. Needs pypdf; without it the PDF is left as is and a hint is printed."""
+    """Make sure a single-page PDF carries the link annotations for `links` (dicts with url, x1, y1, x2, y2
+    in PDF points, origin bottom-left). librsvg 2.63 writes them itself from the SVG <a> elements; this
+    only adds them, with pypdf, when the page has none (older librsvg). Returns the number added."""
     links = list(links)
     if not links:
         return 0
     try:
-        from pypdf import PdfWriter
+        from pypdf import PdfReader, PdfWriter
         from pypdf.annotations import Link
     except ImportError:
-        print(f"{os.path.basename(pdf)}: links skipped, pip install pypdf")
+        return 0
+    if PdfReader(pdf).pages[0].get("/Annots"):
         return 0
     wr = PdfWriter(clone_from=pdf)
     for l in links:

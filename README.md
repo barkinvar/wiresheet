@@ -41,11 +41,11 @@ into PNG and vector PDF.
 |---|---|---|
 | Python 3.8+ | runs the script | already on your machine |
 | `rsvg-convert` | PNG and PDF output | `brew install librsvg` · `apt install librsvg2-bin` |
-| `pypdf` | clickable PDFs and the merged set | `pip install pypdf` |
+| `pypdf` | the merged PDF of a set | `pip install pypdf` |
 
 Everything is Python or a pip package, so it runs the same on macOS, Linux and Windows. SVG output
-needs nothing beyond Python itself; without pypdf you still get PNG and PDF, only without links and
-without the merge. Drop `wiresheet.py` next to your script, or add this folder to `PYTHONPATH`.
+needs nothing beyond Python itself; without pypdf you still get PNG and PDF per sheet, only not the
+merged set. Drop `wiresheet.py` next to your script, or add this folder to `PYTHONPATH`.
 
 ## Quick start
 
@@ -156,8 +156,9 @@ restyle every sheet, or pass an instance to `Sheet(style=...)` for one.
 | `name.pdf` | vector page in the chosen format, with link annotations |
 | `merge_pdfs(out, [pdfs])` | one PDF for the set, links preserved |
 
-librsvg does not carry SVG links into the PDF, so after rendering the engine adds the link
-annotations itself with pypdf. `merge_pdfs` uses pypdf too and keeps them.
+librsvg writes the link annotations into the PDF from the SVG `<a>` elements (tested with 2.63). If
+an older librsvg leaves them out and pypdf is installed, the engine adds them itself. `merge_pdfs`
+keeps them.
 
 ## Layout
 
