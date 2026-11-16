@@ -19,7 +19,7 @@ s.wire(("Battery", "+"), ("Lamp", "+"), RED)
 s.wire(("Battery", "-"), ("Lamp", "-"), BLK)
 ```
 
-![One wire](01-one-wire.png)
+![One wire](tutorial/01-one-wire.png)
 
 ## A column of loads
 
@@ -41,7 +41,7 @@ s.pair("Fuse box", ["OUT 2 +", "OUT 2 -"], "Lamp", ["+", "-"], "2 A")
 s.pair("Fuse box", ["OUT 3 +", "OUT 3 -"], "Lidar", ["VIN", "GND"], "1 A")
 ```
 
-![A column of loads](02-column.png)
+![A column of loads](tutorial/02-column.png)
 
 ## Shared terminals
 
@@ -62,7 +62,7 @@ for load, p, n in [("Motor", "+", "-"), ("Lamp", "+", "-"), ("Lidar", "VIN", "GN
     s.wire(("Bus bar", "stud 3"), (load, n), BLK)
 ```
 
-![Shared terminals](03-shared.png)
+![Shared terminals](tutorial/03-shared.png)
 
 ## Same column, skipped column
 
@@ -85,7 +85,7 @@ s.wire(("Breaker", "OUT"), ("Bus bar", "+"), RED, "", 4)
 s.wire(("Battery B", "-"), ("Bus bar", "-"), BLK, "", 4)          # skips the breaker column
 ```
 
-![Same column, skipped column](04-loops.png)
+![Same column, skipped column](tutorial/04-loops.png)
 
 ## Photos, links, notes, a real page
 
@@ -107,7 +107,7 @@ s.pair("Mains charger", ["DC +", "DC -"], "Battery", ["+", "-"], "6 AWG, SB50", 
 s.wire(("Wireless pad", "coil"), ("Battery", "coil in"), "#b5b5b5", "air gap 20-55 mm", 2, dashed=True)
 ```
 
-![Photos, links, notes, a real page](05-page.png)
+![Photos, links, notes, a real page](tutorial/05-page.png)
 
 ## Where to go from here
 

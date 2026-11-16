@@ -138,7 +138,7 @@ def main():
         s.out_dir = DOCS
         s.render(formats=("svg", "png"), png_scale=1.5)
         md += [f"## {title}", "", text.strip(), "", "```python", code.strip(), "```", "",
-               f"![{title}]({s.fname}.png)", ""]
+               f"![{title}](tutorial/{s.fname}.png)", ""]
     md += ["## Where to go from here", "",
            "- Put sources on the left and loads on the right, and order loads the way the bus bar or fuse block is numbered.",
            "- One rail or one bus per sheet. Several small sheets beat one large one.",
