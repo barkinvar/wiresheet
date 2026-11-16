@@ -11,7 +11,7 @@ on a numbered page you can hand to a technician. Click a picture, land on the pr
 </p>
 
 <p align="center">
-<a href="docs/tutorial.md"><b>▶ Start with the tutorial</b></a> · five tiny drawings, each with its code and the picture it makes, ten minutes.<br>
+<a href="docs/tutorial.md"><b>▶ Start with the tutorial</b></a> · six tiny examples, each with its code and the picture it makes, ten minutes.<br>
 <a href="#install">Install</a> · <a href="#quick-start">Quick start</a> · <a href="#the-model">Reference</a> · <a href="#how-the-wires-are-routed">Routing</a>
 </p>
 
@@ -82,7 +82,7 @@ s.render()      # 01-power.svg  01-power.png  01-power.pdf
 ## Learn it in five drawings
 
 **[docs/tutorial.md](docs/tutorial.md)** builds the model up one idea at a time. Every step is the full code
-and the drawing it produces:
+and the drawing it produces, six steps in all:
 
 | | Step | Shows |
 |---|---|---|
@@ -91,6 +91,7 @@ and the drawing it produces:
 | 3 | [Shared terminals](docs/tutorial.md#shared-terminals) | several wires on one port, junction dots |
 | 4 | [Same column, skipped column](docs/tutorial.md#same-column-skipped-column) | the loop on the left, the dip under a column |
 | 5 | [Photos, links, notes, a real page](docs/tutorial.md#photos-links-notes-a-real-page) | pictures, clickable links, dashed off-robot boxes, the A4 title block |
+| 6 | [A set of sheets, merged](docs/tutorial.md#a-set-of-sheets-merged) | numbering sheets, cross references, `merge_pdfs` into one PDF |
 
 <p align="center"><a href="docs/tutorial.md"><img src="docs/tutorial/03-shared.png" width="640" alt="tutorial step 3"></a></p>
 
