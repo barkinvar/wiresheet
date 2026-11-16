@@ -25,7 +25,7 @@ Minimal use:
     s.pair("Fuse box", ["OUT 2 +", "OUT 2 -"], "Lamp", ["+", "-"], "2 A")
     s.render()            # writes 01-power.svg, .png, .pdf
 
-Requires rsvg-convert (librsvg) on PATH for PNG and PDF output; SVG needs nothing.
+Requires rsvg-convert (librsvg) on PATH for PNG and PDF output, and pypdf for PDF links and merging; SVG needs nothing.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 # ---------------------------------------------------------------- wire colours
 RED, BLK, BLU, YEL, GRN, ORG = "#c00000", "#111111", "#1f5fbf", "#d9a800", "#1e9e3e", "#e07000"
@@ -312,60 +312,37 @@ class Sheet:
         return written
 
 
-def _tool(name: str):
-    """A helper binary: on PATH, or built from tools/<name>.swift next to this file (macOS, PDFKit)."""
-    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", name)
-    for cand in (shutil.which(name), here):
-        if cand and os.access(cand, os.X_OK):
-            return cand
-    src = here + ".swift"
-    if os.path.exists(src) and shutil.which("swiftc"):
-        subprocess.run(["swiftc", "-O", "-o", here, src], check=True, capture_output=True)
-        return here
-    return None
-
-
 def add_pdf_links(pdf: str, links) -> int:
-    """Add URL link annotations to a single-page PDF. `links` are dicts with url, x1, y1, x2, y2 in PDF points,
-    origin bottom-left. Uses pypdf if installed, else the PDFKit helper tools/pdflinks (macOS)."""
+    """Add URL link annotations to a single-page PDF in place. `links` are dicts with url, x1, y1, x2, y2
+    in PDF points, origin bottom-left. Needs pypdf; without it the PDF is left as is and a hint is printed."""
     links = list(links)
     if not links:
         return 0
     try:
-        from pypdf import PdfReader, PdfWriter
+        from pypdf import PdfWriter
         from pypdf.annotations import Link
-        wr = PdfWriter(); wr.append(PdfReader(pdf))
-        for l in links:
-            wr.add_annotation(page_number=0, annotation=Link(rect=(l["x1"], l["y1"], l["x2"], l["y2"]), url=l["url"]))
-        with open(pdf, "wb") as f: wr.write(f)
-        return len(links)
     except ImportError:
-        pass
-    tool = _tool("pdflinks")
-    if not tool:
-        print(f"{pdf}: links skipped (pip install pypdf, or build tools/pdflinks.swift on macOS)")
+        print(f"{os.path.basename(pdf)}: links skipped, pip install pypdf")
         return 0
-    import json, tempfile
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as t:
-        json.dump(links, t); tmp = t.name
-    subprocess.run([tool, pdf, tmp], check=True, capture_output=True)
-    os.remove(tmp)
+    wr = PdfWriter(clone_from=pdf)
+    for l in links:
+        wr.add_annotation(page_number=0, annotation=Link(rect=(l["x1"], l["y1"], l["x2"], l["y2"]), url=l["url"]))
+    with open(pdf, "wb") as f:
+        wr.write(f)
     return len(links)
 
 
 def merge_pdfs(out: str, pdfs) -> str:
-    """Join single-sheet PDFs into one file, keeping link annotations. Uses pypdf if installed, else the
-    PDFKit helper tools/mergepdf (macOS); otherwise raises with instructions."""
+    """Join single-sheet PDFs into one file, keeping link annotations. Needs pypdf."""
     pdfs = list(pdfs)
     try:
         from pypdf import PdfWriter
-        wr = PdfWriter()
-        for p in pdfs: wr.append(p)
-        with open(out, "wb") as f: wr.write(f)
-    except ImportError:
-        tool = _tool("mergepdf")
-        if not tool:
-            raise RuntimeError("pip install pypdf, or build tools/mergepdf.swift on macOS")
-        subprocess.run([tool, out, *pdfs], check=True, capture_output=True)
+    except ImportError as e:
+        raise RuntimeError("merge_pdfs needs pypdf: pip install pypdf") from e
+    wr = PdfWriter()
+    for p in pdfs:
+        wr.append(p)
+    with open(out, "wb") as f:
+        wr.write(f)
     print(f"{out}: {len(pdfs)} pages")
     return out

@@ -7,7 +7,7 @@ on a numbered page you can hand to a technician. Click a picture, land on the pr
 <p align="center"><img src="docs/example.png" width="900" alt="example sheet: battery, breaker, bus bars, loads"></p>
 
 <p align="center">
-<code>python 3.8+</code> · <code>standard library only</code> · <code>SVG / PNG / PDF</code> · <code>macOS · Linux</code>
+<code>python 3.8+</code> · <code>pure python</code> · <code>SVG / PNG / PDF</code> · <code>macOS · Linux · Windows</code>
 </p>
 
 ---
@@ -41,11 +41,11 @@ into PNG and vector PDF.
 |---|---|---|
 | Python 3.8+ | runs the script | already on your machine |
 | `rsvg-convert` | PNG and PDF output | `brew install librsvg` · `apt install librsvg2-bin` |
-| `pypdf` (optional) | PDF links and merging on any OS | `pip install pypdf` |
-| Swift toolchain (macOS, optional) | PDF links and merging without pypdf | comes with Xcode command line tools |
+| `pypdf` | clickable PDFs and the merged set | `pip install pypdf` |
 
-SVG output needs nothing beyond Python. Drop `wiresheet.py` next to your script, or add this folder
-to `PYTHONPATH`.
+Everything is Python or a pip package, so it runs the same on macOS, Linux and Windows. SVG output
+needs nothing beyond Python itself; without pypdf you still get PNG and PDF, only without links and
+without the merge. Drop `wiresheet.py` next to your script, or add this folder to `PYTHONPATH`.
 
 ## Quick start
 
@@ -157,9 +157,7 @@ restyle every sheet, or pass an instance to `Sheet(style=...)` for one.
 | `merge_pdfs(out, [pdfs])` | one PDF for the set, links preserved |
 
 librsvg does not carry SVG links into the PDF, so after rendering the engine adds the link
-annotations itself: with pypdf when installed, otherwise on macOS it builds and runs
-`tools/pdflinks.swift` (PDFKit, no dependencies). `merge_pdfs` works the same way with
-`tools/mergepdf.swift`.
+annotations itself with pypdf. `merge_pdfs` uses pypdf too and keeps them.
 
 ## Layout
 
@@ -167,8 +165,6 @@ annotations itself: with pypdf when installed, otherwise on macOS it builds and 
 wiresheet.py          the whole engine, one file
 examples/demo.py      two-sheet example
 examples/img/         photos for the example (empty, add your own)
-tools/pdflinks.swift  PDF link annotations via PDFKit (macOS fallback)
-tools/mergepdf.swift  PDF merge via PDFKit (macOS fallback)
 docs/example.png      the image at the top of this file
 ```
 

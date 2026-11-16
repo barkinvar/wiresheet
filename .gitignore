@@ -1,6 +1,4 @@
 __pycache__/
 *.pyc
 examples/out/
-tools/mergepdf
 .DS_Store
-tools/pdflinks
