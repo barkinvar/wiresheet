@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 # ---------------------------------------------------------------- wire colours
 RED, BLK, BLU, YEL, GRN, ORG = "#c00000", "#111111", "#1f5fbf", "#d9a800", "#1e9e3e", "#e07000"
@@ -255,36 +255,44 @@ class Sheet:
         self.layout()
         self.link_rects = []
         body = [self.wires_svg()] + [self.node_svg(n) for n in self.devs]
-        pw_mm, ph_mm = PAGES[self.page]
-        PW, PH = round(pw_mm * PX_PER_MM), round(ph_mm * PX_PER_MM)
-        fx, fy, fw, fh = 24, 24, PW - 48, PH - 48
-        tb_h, tb_w = 64, min(760, fw - 40)
-        ax, ay, aw, ah = fx + 16, fy + 16, fw - 32, fh - 32 - tb_h
-        sc = min(aw / self.width, ah / self.height, self.st.max_scale)
-        ox = ax + (aw - self.width * sc) / 2
-        oy = ay + (ah - self.height * sc) / 2
+        fit = self.page == "fit"
+        if fit:                                            # no page: just the drawing plus a margin
+            PW, PH = round(self.width) + 32, round(self.height) + 32
+            pw_mm, ph_mm = PW / PX_PER_MM, PH / PX_PER_MM
+            sc, ox, oy = 1.0, 16.0, 16.0
+        else:
+            pw_mm, ph_mm = PAGES[self.page]
+            PW, PH = round(pw_mm * PX_PER_MM), round(ph_mm * PX_PER_MM)
+            fx, fy, fw, fh = 24, 24, PW - 48, PH - 48
+            tb_h, tb_w = 64, min(760, fw - 40)
+            ax, ay, aw, ah = fx + 16, fy + 16, fw - 32, fh - 32 - tb_h
+            sc = min(aw / self.width, ah / self.height, self.st.max_scale)
+            ox = ax + (aw - self.width * sc) / 2
+            oy = ay + (ah - self.height * sc) / 2
         k = (pw_mm * 72 / 25.4) / PW                      # page px -> PDF points
         self.pdf_links = [dict(url=u, x1=(ox + lx * sc) * k, x2=(ox + (lx + lw) * sc) * k,
                                y1=(PH - (oy + (ly + lh) * sc)) * k, y2=(PH - (oy + ly * sc)) * k)
                           for (u, lx, ly, lw, lh) in self.link_rects]
-        tbx, tby = fx + fw - tb_w, fy + fh - tb_h
-        cells = [(0, tb_w - 360, "", self.title, 19, True), (tb_w - 360, 120, "sheet", self.sheet, 15, False),
-                 (tb_w - 240, 80, "rev", self.rev, 15, False), (tb_w - 160, 160, "date", self.date, 15, False)]
-        tb = [f'<rect x="{tbx}" y="{tby}" width="{tb_w}" height="{tb_h}" fill="white" stroke="#333" stroke-width="1.5"/>']
-        for cx, cw, head, val, fs, bold in cells:
-            x = tbx + cx
-            tb.append(f'<line x1="{x}" y1="{tby}" x2="{x}" y2="{tby + tb_h}" stroke="#333" stroke-width="1"/>')
-            if head:
-                tb.append(f'<text x="{x + 10}" y="{tby + 20}" font-size="10" fill="#666">{head}</text>')
-            weight = ' font-weight="bold"' if bold else ""
-            tb.append(f'<text x="{x + 10}" y="{tby + 44}" font-size="{fs}"{weight}>{_esc(val)}</text>')
-        foot = "  ·  ".join(t for t in (self.project, self.sub) if t)
-        if foot:
-            tb.append(f'<text x="{tbx - 14}" y="{tby + tb_h - 12}" text-anchor="end" font-size="11" fill="#666">{_esc(foot)}</text>')
+        tb, frame = [], []
+        if not fit:
+            frame = [f'<rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" fill="none" stroke="#333" stroke-width="1.5"/>']
+            tbx, tby = fx + fw - tb_w, fy + fh - tb_h
+            cells = [(0, tb_w - 360, "", self.title, 19, True), (tb_w - 360, 120, "sheet", self.sheet, 15, False),
+                     (tb_w - 240, 80, "rev", self.rev, 15, False), (tb_w - 160, 160, "date", self.date, 15, False)]
+            tb.append(f'<rect x="{tbx}" y="{tby}" width="{tb_w}" height="{tb_h}" fill="white" stroke="#333" stroke-width="1.5"/>')
+            for cx, cw, head, val, fs, bold in cells:
+                x = tbx + cx
+                tb.append(f'<line x1="{x}" y1="{tby}" x2="{x}" y2="{tby + tb_h}" stroke="#333" stroke-width="1"/>')
+                if head:
+                    tb.append(f'<text x="{x + 10}" y="{tby + 20}" font-size="10" fill="#666">{head}</text>')
+                weight = ' font-weight="bold"' if bold else ""
+                tb.append(f'<text x="{x + 10}" y="{tby + 44}" font-size="{fs}"{weight}>{_esc(val)}</text>')
+            foot = "  \u00b7  ".join(t for t in (self.project, self.sub) if t)
+            if foot:
+                tb.append(f'<text x="{tbx - 14}" y="{tby + tb_h - 12}" text-anchor="end" font-size="11" fill="#666">{_esc(foot)}</text>')
         parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{pw_mm}mm" height="{ph_mm}mm" viewBox="0 0 {PW} {PH}" '
                  f'font-family="Helvetica, Arial, sans-serif">',
-                 f'<rect x="0" y="0" width="{PW}" height="{PH}" fill="white"/>',
-                 f'<rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" fill="none" stroke="#333" stroke-width="1.5"/>',
+                 f'<rect x="0" y="0" width="{PW}" height="{PH}" fill="white"/>', *frame,
                  f'<g transform="translate({ox:.1f},{oy:.1f}) scale({sc:.4f})">', *body, '</g>', *tb, '</svg>']
         return "\n".join(parts)
 

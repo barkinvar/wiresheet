@@ -69,6 +69,8 @@ s.render()      # 01-power.svg  01-power.png  01-power.pdf
 
 `examples/demo.py` builds a two-sheet set and merges it into one PDF. Run it from the `examples` folder.
 
+New here? **[docs/tutorial.md](docs/tutorial.md)** walks through the grid in five small examples, each with its code and the rendered result.
+
 ## The model
 
 A sheet is a grid. You give it the **columns in reading order**, sources on the left and loads on the
@@ -92,7 +94,7 @@ Sheet(fname, title, sheet="1 of 6", columns=[[...], [...]],
 | `columns` | list of columns, each a list of box names, in reading order |
 | `width` | box width in drawing pixels |
 | `gap` | channel width between columns; computed from the wire count if omitted |
-| `page` | `A3`, `A4`, `A2`, `Letter`, `Tabloid`, all landscape; the drawing is scaled to fit |
+| `page` | `A3`, `A4`, `A2`, `Letter`, `Tabloid`, all landscape, drawing scaled to fit; or `fit` for just the drawing with no frame or title block, handy for docs and chat |
 | `img_dir`, `out_dir` | where photos are read from and files are written to |
 
 ### Boxes
