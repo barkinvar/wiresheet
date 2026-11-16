@@ -66,8 +66,9 @@ s.dev(name, type_="", img=None, ports=(), note="", imgh=80, offrobot=False, link
 - `ports` are the labels printed on the device, top to bottom. Use the real printing, `DC PWR  VP+`, `PoE+  RJ45`, `stud 3`, not invented names.
 - `note` is one short line under the ports. Keep it to facts.
 - `offrobot=True` draws the box dashed, for chargers, docks and other external equipment.
-- `link` is a URL, usually the product page. The whole box becomes clickable in the SVG, and the PDF gets
-  a link annotation at the same spot, so a reader can click a part and land on its datasheet or shop page.
+- `link` is a URL, usually the product page. The picture becomes clickable in the SVG and gets a link
+  annotation in the PDF, so a reader clicks the part and lands on its datasheet or shop page. A box with no
+  picture links its title bar instead.
 
 Wires:
 

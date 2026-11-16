@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 # ---------------------------------------------------------------- wire colours
 RED, BLK, BLU, YEL, GRN, ORG = "#c00000", "#111111", "#1f5fbf", "#d9a800", "#1e9e3e", "#e07000"
@@ -84,8 +84,8 @@ class Sheet:
     def dev(self, name: str, type_: str = "", img: str | None = None, ports=(), note: str = "", imgh: int = 80,
             offrobot: bool = False, link: str | None = None):
         """Add a box. `ports` are the labels printed on the device, top to bottom. `img` is a file in img_dir.
-        `offrobot=True` draws the box dashed (external equipment). `link` is a URL: the whole box becomes
-        clickable in the SVG, and the PDF gets a link annotation (see add_pdf_links)."""
+        `offrobot=True` draws the box dashed (external equipment). `link` is a URL: the picture becomes
+        clickable in the SVG and gets a link annotation in the PDF; a box without a picture links its title bar."""
         self.devs[name] = dict(type=type_, img=img, ports=list(ports), note=note, imgh=imgh, off=offrobot, link=link)
 
     def wire(self, a, b, color: str = BLK, label: str = "", width: float = 2.5, dashed: bool = False):
@@ -151,16 +151,25 @@ class Sheet:
         st = self.st
         d = self.devs[name]; x, y = self.pos[name]; W = self.W; h = self.node_h(d)
         dash = ' stroke-dasharray="6,4"' if d["off"] else ""
-        o = [f'<rect x="{x}" y="{y}" width="{W}" height="{h}" fill="{st.box_fill}" stroke="{st.stroke}" stroke-width="1.2"{dash}/>',
-             f'<rect x="{x}" y="{y}" width="{W}" height="{st.title_h}" fill="{st.title_fill}" stroke="{st.stroke}" stroke-width="1.2"{dash}/>',
-             f'<text x="{x + W/2}" y="{y + 18.5}" text-anchor="middle" font-size="{st.f_title}" font-weight="bold">{_esc(name)}</text>']
+        link = d.get("link")
+        o = [f'<rect x="{x}" y="{y}" width="{W}" height="{h}" fill="{st.box_fill}" stroke="{st.stroke}" stroke-width="1.2"{dash}/>']
+        title = (f'<rect x="{x}" y="{y}" width="{W}" height="{st.title_h}" fill="{st.title_fill}" stroke="{st.stroke}" stroke-width="1.2"{dash}/>\n'
+                 f'<text x="{x + W/2}" y="{y + 18.5}" text-anchor="middle" font-size="{st.f_title}" font-weight="bold">{_esc(name)}</text>')
+        if link and not d["img"]:                       # no picture: the title bar carries the link
+            self.link_rects.append((link, x, y, W, st.title_h))
+            title = f'<a href="{_esc(link)}" target="_blank">{title}</a>'
+        o.append(title)
         cy = y + st.title_h + 4
         if d["type"]:
             o.append(f'<text x="{x + W/2}" y="{cy + 13}" text-anchor="middle" font-size="{st.f_type}" fill="#444">{_esc(d["type"])}</text>')
             cy += st.type_h
         if d["img"]:
             src = _b64(os.path.join(self.img_dir, d["img"]))
-            o.append(f'<image x="{x + 12}" y="{cy + st.img_pad}" width="{W - 24}" height="{d["imgh"]}" href="{src}" preserveAspectRatio="xMidYMid meet"/>')
+            img = f'<image x="{x + 12}" y="{cy + st.img_pad}" width="{W - 24}" height="{d["imgh"]}" href="{src}" preserveAspectRatio="xMidYMid meet"/>'
+            if link:                                     # the picture is the link
+                self.link_rects.append((link, x + 12, cy + st.img_pad, W - 24, d["imgh"]))
+                img = f'<a href="{_esc(link)}" target="_blank">{img}</a>'
+            o.append(img)
             cy += d["imgh"] + 2 * st.img_pad
         for p in d["ports"]:
             o.append(f'<rect x="{x}" y="{cy}" width="{W}" height="{st.port_h}" fill="none" stroke="#aaa" stroke-width="0.8"/>')
@@ -168,11 +177,7 @@ class Sheet:
             cy += st.port_h
         if d["note"]:
             o.append(f'<text x="{x + W/2}" y="{cy + 13}" text-anchor="middle" font-size="{st.f_note}" fill="#555">{_esc(d["note"])}</text>')
-        out = "\n".join(o)
-        if d.get("link"):
-            self.link_rects.append((d["link"], x, y, W, h))
-            out = f'<a href="{_esc(d["link"])}" target="_blank">\n{out}\n</a>'
-        return out
+        return "\n".join(o)
 
     def wires_svg(self) -> str:
         st, W = self.st, self.W
