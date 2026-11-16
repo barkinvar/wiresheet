@@ -96,15 +96,16 @@ s.render()
 The last example renders a real page instead of `fit`: A4 landscape with a frame and a title block
 filled from `title`, `sheet`, `rev` and `date`, and `project` in the footer. The battery has a photo
 from `img_dir`, a one-line `note`, and a `link`, so clicking the picture in the SVG or PDF opens the
-product page. The charger is `offrobot=True` and drawn dashed. Wires can be dashed too, here for the
+product page. The charger and the pad are `external=True`, not part of the machine, and drawn dashed.
+Wires can be dashed too, here for the
 air gap of a wireless charger, and colours are any hex string.
 
 ```python
 s = Sheet("05-page", "Charging", sheet="1 of 1", project="Demo machine", rev="A", date="2026-11-16",
           page="A4", img_dir=IMG,
           columns=[["Mains charger", "Wireless pad"], ["Battery"]])
-s.dev("Mains charger", "LiFePO4 charger, 29.2 V", None, ["DC +", "DC -"], offrobot=True)
-s.dev("Wireless pad", "transmitter, off-robot", None, ["coil"], offrobot=True)
+s.dev("Mains charger", "LiFePO4 charger, 29.2 V", None, ["DC +", "DC -"], external=True)
+s.dev("Wireless pad", "transmitter, in the floor", None, ["coil"], external=True)
 s.dev("Battery", "24 V 50 Ah LiFePO4", "placeholder-battery.png", ["+", "-", "coil in"],
       "charge leads land here", imgh=70, link="https://example.com/battery")
 s.pair("Mains charger", ["DC +", "DC -"], "Battery", ["+", "-"], "6 AWG, SB50", 3)

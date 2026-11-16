@@ -14,7 +14,7 @@ Minimal use:
 
     from wiresheet import Sheet, RED, BLK
 
-    s = Sheet("01-power", "Power", sheet="1 of 1", project="My robot",
+    s = Sheet("01-power", "Power", sheet="1 of 1", project="My machine",
               columns=[["Battery"], ["Fuse box"], ["Motor", "Lamp"]])
     s.dev("Battery", "12 V 20 Ah", None, ["+", "-"])
     s.dev("Fuse box", "4-way", None, ["IN +", "IN -", "OUT 1 +", "OUT 1 -", "OUT 2 +", "OUT 2 -"])
@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 # ---------------------------------------------------------------- wire colours
 RED, BLK, BLU, YEL, GRN, ORG = "#c00000", "#111111", "#1f5fbf", "#d9a800", "#1e9e3e", "#e07000"
@@ -82,11 +82,15 @@ class Sheet:
 
     # ---------------------------------------------------------------- data entry
     def dev(self, name: str, type_: str = "", img: str | None = None, ports=(), note: str = "", imgh: int = 80,
-            offrobot: bool = False, link: str | None = None):
+            external: bool = False, link: str | None = None, offrobot: bool | None = None):
         """Add a box. `ports` are the labels printed on the device, top to bottom. `img` is a file in img_dir.
-        `offrobot=True` draws the box dashed (external equipment). `link` is a URL: the picture becomes
-        clickable in the SVG and gets a link annotation in the PDF; a box without a picture links its title bar."""
-        self.devs[name] = dict(type=type_, img=img, ports=list(ports), note=note, imgh=imgh, off=offrobot, link=link)
+        `external=True` draws the box dashed: equipment that is not part of the machine, such as a charger,
+        a dock or a wall outlet. `link` is a URL: the picture becomes clickable in the SVG and gets a link
+        annotation in the PDF; a box without a picture links its title bar. `offrobot` is the old name of
+        `external` and still accepted."""
+        if offrobot is not None:
+            external = offrobot
+        self.devs[name] = dict(type=type_, img=img, ports=list(ports), note=note, imgh=imgh, off=external, link=link)
 
     def wire(self, a, b, color: str = BLK, label: str = "", width: float = 2.5, dashed: bool = False):
         """One conductor from (box, port) to (box, port)."""

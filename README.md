@@ -19,7 +19,7 @@ on a numbered page you can hand to a technician. Click a picture, land on the pr
 
 ## Why
 
-Robots and other one-off machines rarely get a wiring drawing, because the tools are either
+Machines built once or in small numbers rarely get a wiring drawing, because the tools are either
 schematic capture (too abstract for "which XT30 goes where") or harness CAD (per-cable tables that
 nobody reads during a walkthrough). What a handoff actually needs is the picture a good tech would
 sketch on a whiteboard: boxes for the parts, the labels that are printed on them, lines between the
@@ -62,7 +62,7 @@ pip install -r wiresheet/requirements.txt      # just pypdf, optional
 ```python
 from wiresheet import Sheet, RED, BLK
 
-s = Sheet("01-power", "Power", sheet="1 of 1", project="My robot",
+s = Sheet("01-power", "Power", sheet="1 of 1", project="My machine",
           columns=[["Battery"], ["Fuse box"], ["Motor", "Lamp"]])
 
 s.dev("Battery",  "12 V 20 Ah", "battery.jpg", ["+", "-"], link="https://shop.example/battery")
@@ -90,7 +90,7 @@ and the drawing it produces, six steps in all:
 | 2 | [A column of loads](docs/tutorial.md#a-column-of-loads) | order inside a column, `pair`, labels, tracks that never cross |
 | 3 | [Shared terminals](docs/tutorial.md#shared-terminals) | several wires on one port, junction dots |
 | 4 | [Same column, skipped column](docs/tutorial.md#same-column-skipped-column) | the loop on the left, the dip under a column |
-| 5 | [Photos, links, notes, a real page](docs/tutorial.md#photos-links-notes-a-real-page) | pictures, clickable links, dashed off-robot boxes, the A4 title block |
+| 5 | [Photos, links, notes, a real page](docs/tutorial.md#photos-links-notes-a-real-page) | pictures, clickable links, dashed external boxes, the A4 title block |
 | 6 | [A set of sheets, merged](docs/tutorial.md#a-set-of-sheets-merged) | numbering sheets, cross references, `merge_pdfs` into one PDF |
 
 <p align="center"><a href="docs/tutorial.md"><img src="docs/tutorial/03-shared.png" width="640" alt="tutorial step 3"></a></p>
@@ -124,7 +124,7 @@ Sheet(fname, title, sheet="1 of 6", columns=[[...], [...]],
 ### Boxes
 
 ```python
-s.dev(name, type_="", img=None, ports=(), note="", imgh=80, offrobot=False, link=None)
+s.dev(name, type_="", img=None, ports=(), note="", imgh=80, external=False, link=None)
 ```
 
 | Argument | Meaning |
@@ -134,7 +134,7 @@ s.dev(name, type_="", img=None, ports=(), note="", imgh=80, offrobot=False, link
 | `img` | photo file in `img_dir`, embedded in the SVG; `imgh` is its height in pixels |
 | `ports` | labels **as printed on the device**, top to bottom: `DC PWR  VP+`, `PoE+  RJ45`, `stud 3` |
 | `note` | one short line under the ports, facts only |
-| `offrobot` | draw dashed, for chargers, docks and other external equipment |
+| `external` | draw dashed: equipment that is not part of the machine, such as a charger, a dock, a wall outlet |
 | `link` | product URL; the photo becomes clickable, or the title bar when there is no photo |
 
 ### Wires
@@ -162,7 +162,7 @@ type, a gauge, a length.
 
 ## Conventions that read well
 
-Learnt on real robots, not rules of the tool:
+Learnt on real builds, not rules of the tool:
 
 - **One device per sheet.** If a converter's input is on the power sheet, put its output on the sheet
   with the load, and write `OUT: sheet 3` in the note.
