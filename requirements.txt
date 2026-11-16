@@ -1,0 +1,2 @@
+# optional: merging sheets into one PDF (and link fallback for old librsvg)
+pypdf>=3.0

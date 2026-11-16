@@ -7,7 +7,12 @@ on a numbered page you can hand to a technician. Click a picture, land on the pr
 <p align="center"><img src="docs/example.png" width="900" alt="example sheet: battery, breaker, bus bars, loads"></p>
 
 <p align="center">
-<code>python 3.8+</code> · <code>pure python</code> · <code>SVG / PNG / PDF</code> · <code>macOS · Linux · Windows</code>
+<code>python 3.8+</code> · <code>standard library only</code> · <code>SVG / PNG / PDF</code> · <code>macOS · Linux · Windows</code>
+</p>
+
+<p align="center">
+<a href="docs/tutorial.md"><b>▶ Start with the tutorial</b></a> · five tiny drawings, each with its code and the picture it makes, ten minutes.<br>
+<a href="#install">Install</a> · <a href="#quick-start">Quick start</a> · <a href="#the-model">Reference</a> · <a href="#how-the-wires-are-routed">Routing</a>
 </p>
 
 ---
@@ -37,15 +42,20 @@ into PNG and vector PDF.
 
 ## Install
 
-| What | Why | How |
-|---|---|---|
-| Python 3.8+ | runs the script | already on your machine |
-| `rsvg-convert` | PNG and PDF output | `brew install librsvg` · `apt install librsvg2-bin` |
-| `pypdf` | the merged PDF of a set | `pip install pypdf` |
+`wiresheet.py` imports only the Python standard library. Two outside pieces are used when present:
 
-Everything is Python or a pip package, so it runs the same on macOS, Linux and Windows. SVG output
-needs nothing beyond Python itself; without pypdf you still get PNG and PDF per sheet, only not the
-merged set. Drop `wiresheet.py` next to your script, or add this folder to `PYTHONPATH`.
+| Piece | Needed for | Without it | Install |
+|---|---|---|---|
+| `rsvg-convert` (librsvg, a command-line tool) | PNG and PDF output | you still get SVG | `brew install librsvg` · `apt install librsvg2-bin` · Windows: `choco install rsvg-convert` or MSYS2 |
+| `pypdf` (pure-Python pip package) | merging a set into one PDF | you still get every sheet as its own PDF | `pip install pypdf` |
+
+No compiled extensions, no services, so it behaves the same on macOS, Linux and Windows. Drop
+`wiresheet.py` next to your script, or add this folder to `PYTHONPATH`, or:
+
+```bash
+git clone https://github.com/barkinvar/wiresheet
+pip install -r wiresheet/requirements.txt      # just pypdf, optional
+```
 
 ## Quick start
 
@@ -69,7 +79,20 @@ s.render()      # 01-power.svg  01-power.png  01-power.pdf
 
 `examples/demo.py` builds a two-sheet set and merges it into one PDF. Run it from the `examples` folder.
 
-New here? **[docs/tutorial.md](docs/tutorial.md)** walks through the grid in five small examples, each with its code and the rendered result.
+## Learn it in five drawings
+
+**[docs/tutorial.md](docs/tutorial.md)** builds the model up one idea at a time. Every step is the full code
+and the drawing it produces:
+
+| | Step | Shows |
+|---|---|---|
+| 1 | [One wire](docs/tutorial.md#one-wire) | columns set x, ports set rows, `wire` joins two ports |
+| 2 | [A column of loads](docs/tutorial.md#a-column-of-loads) | order inside a column, `pair`, labels, tracks that never cross |
+| 3 | [Shared terminals](docs/tutorial.md#shared-terminals) | several wires on one port, junction dots |
+| 4 | [Same column, skipped column](docs/tutorial.md#same-column-skipped-column) | the loop on the left, the dip under a column |
+| 5 | [Photos, links, notes, a real page](docs/tutorial.md#photos-links-notes-a-real-page) | pictures, clickable links, dashed off-robot boxes, the A4 title block |
+
+<p align="center"><a href="docs/tutorial.md"><img src="docs/tutorial/03-shared.png" width="640" alt="tutorial step 3"></a></p>
 
 ## The model
 
@@ -165,9 +188,13 @@ keeps them.
 ## Layout
 
 ```
-wiresheet.py          the whole engine, one file
+wiresheet.py          the whole engine, one file, standard library only
+requirements.txt      pypdf (optional, for merged PDFs)
 examples/demo.py      two-sheet example
-examples/img/         photos for the example (empty, add your own)
+examples/tutorial.py  builds docs/tutorial.md and its pictures
+examples/img/         photos for the examples
+docs/tutorial.md      the tutorial
+docs/tutorial/        its rendered drawings
 docs/example.png      the image at the top of this file
 ```
 
